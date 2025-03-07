@@ -47,16 +47,26 @@ const partnerSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    gst: {
+    bankAccNumber: {
       type: String,
       unique: true,
       trim: true,
       default: null, // GST is optional
     },
+    IFSC: {
+      type: String,
+      trim: true,
+      default: null, // GST is optional
+    },
+    accountHolderName: {
+      type: String,
+      trim: true,
+      default: null, // GST is optional
+    },
     designation: {
       type: String,
-      enum: ["StorePartner"],
-      default: "StorePartner",
+      enum: ["Telecaller"],
+      default: "Telecaller",
       required: true,
     },
     status: {
