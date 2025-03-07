@@ -33,6 +33,7 @@ const admins = [
       "customers",
       "customer-order",
       "telecallers",
+      "storepartners",
     ],
   },
   {
@@ -95,6 +96,7 @@ const admins = [
       "store-settings",
       "notifications",
       "telecallers",
+      "storepartners",
     ],
   },
   {
@@ -129,6 +131,7 @@ const admins = [
       "customers",
       "customer-order",
       "telecallers",
+      "storepartners",
     ],
   },
 ];

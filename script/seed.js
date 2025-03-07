@@ -61,8 +61,8 @@ const importData = async () => {
     // await Order.deleteMany();
     // await Order.insertMany(orderData);
 
-    await Setting.deleteMany();
-    await Setting.insertMany(settingData);
+    // await Setting.deleteMany();
+    // await Setting.insertMany(settingData);
 
     console.log("data inserted successfully!");
     process.exit();
