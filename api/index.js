@@ -19,6 +19,7 @@ const settingRoutes = require("../routes/settingRoutes");
 const currencyRoutes = require("../routes/currencyRoutes");
 const languageRoutes = require("../routes/languageRoutes");
 const notificationRoutes = require("../routes/notificationRoutes");
+const telecallerRoutes = require("../routes/telecallerRoutes");
 const partnerRoutes = require("../routes/partnerRoutes");
 const { isAuth, isAdmin } = require("../config/auth");
 // const {
@@ -56,6 +57,7 @@ app.use("/api/currency/", isAuth, currencyRoutes);
 app.use("/api/language/", languageRoutes);
 app.use("/api/notification/", isAuth, notificationRoutes);
 app.use("/api/partners/", partnerRoutes);
+app.use("/api/tele/", telecallerRoutes);
 
 //if you not use admin dashboard then these two route will not needed.
 app.use("/api/admin/", adminRoutes);

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const partnerSchema = new mongoose.Schema(
+const telecallerSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -79,4 +79,4 @@ const partnerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Partner", partnerSchema);
+module.exports = mongoose.model("Telecaller", telecallerSchema);
