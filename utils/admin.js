@@ -32,6 +32,7 @@ const admins = [
       "coming-soon",
       "customers",
       "customer-order",
+      "telecallers",
     ],
   },
   {
@@ -93,6 +94,7 @@ const admins = [
       "customization",
       "store-settings",
       "notifications",
+      "telecallers",
     ],
   },
   {
@@ -126,6 +128,7 @@ const admins = [
       "coming-soon",
       "customers",
       "customer-order",
+      "telecallers",
     ],
   },
 ];
