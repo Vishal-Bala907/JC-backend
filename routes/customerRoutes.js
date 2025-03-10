@@ -19,12 +19,15 @@ const {
   getShippingAddress,
   updateShippingAddress,
   deleteShippingAddress,
+  addCustomerViaTelecaller,
+  loginTelecaller,
 } = require("../controller/customerController");
 const {
   passwordVerificationLimit,
   emailVerificationLimit,
   phoneVerificationLimit,
 } = require("../lib/email-sender/sender");
+require("../controller/customerOrderController");
 
 //verify email
 router.post("/verify-email", emailVerificationLimit, verifyEmailAddress);
@@ -46,9 +49,11 @@ router.delete("/shipping/address/:userId/:shippingId", deleteShippingAddress);
 
 //register a user
 router.post("/register/:token", registerCustomer);
+router.post("/tele/add-customer", addCustomerViaTelecaller);
 
 //login a user
 router.post("/login", loginCustomer);
+router.post("/login-tele", loginTelecaller);
 
 //register or login with google and fb
 router.post("/signup/oauth", signUpWithOauthProvider);

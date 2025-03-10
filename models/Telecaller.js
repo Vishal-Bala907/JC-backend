@@ -1,3 +1,4 @@
+const { orders } = require("@paypal/checkout-server-sdk");
 const mongoose = require("mongoose");
 
 const telecallerSchema = new mongoose.Schema(
@@ -75,6 +76,25 @@ const telecallerSchema = new mongoose.Schema(
       default: "Hold", // Default value set at the schema level
       required: true,
     },
+    commission: {
+      type: Number,
+      default: 0,
+      required: true,
+      min: 0,
+    },
+    totalIncome: {
+      type: Number,
+      default: 0,
+      required: true,
+      min: 0,
+    },
+    remainingBalance: {
+      type: Number,
+      default: 0,
+      required: true,
+      min: 0,
+    },
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   },
   { timestamps: true }
 );

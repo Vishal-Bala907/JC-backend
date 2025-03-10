@@ -11,6 +11,7 @@ const {
   forgetPasswordEmailBody,
 } = require("../lib/email-sender/templates/forget-password");
 const { sendVerificationCode } = require("../lib/phone-verification/sender");
+const Telecaller = require("../models/Telecaller");
 
 const verifyEmailAddress = async (req, res) => {
   const isAdded = await Customer.findOne({ email: req.body.email });
@@ -89,6 +90,115 @@ const verifyPhoneNumber = async (req, res) => {
     console.error("Error during phone verification:", err);
     res.status(500).send({
       message: err.message,
+    });
+  }
+};
+
+const addCustomerViaTelecaller = async (req, res) => {
+  const {
+    name,
+    image,
+    address,
+    country,
+    city,
+    shippingAddress,
+    email,
+    phone,
+    password,
+  } = req.body;
+
+  // Basic validation
+  if (!name || !email) {
+    return res.status(400).json({ error: "Name and email are required." });
+  }
+
+  try {
+    // Check if phone or email already exists
+    const existingCustomer = await Customer.findOne({
+      $or: [{ email }, { phone }],
+    });
+
+    if (existingCustomer) {
+      return res
+        .status(400)
+        .json({ error: "Email or phone number already exists." });
+    }
+
+    // Create a new customer
+    const newCustomer = new Customer({
+      name,
+      image,
+      address,
+      country,
+      city,
+      shippingAddress,
+      email,
+      phone,
+      password,
+    });
+
+    // Save the customer to the database
+    console.dir(newCustomer);
+    await newCustomer.save();
+
+    res.status(201).json({
+      message: "Customer created successfully",
+      customer: newCustomer,
+    });
+  } catch (error) {
+    console.error("Error creating customer:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+const loginTelecaller = async (req, res) => {
+  try {
+    const telecaller = await Telecaller.findOne({ email: req.body.email });
+
+    // Check if telecaller exists and role is 'Accepted'
+    if (!telecaller) {
+      return res.status(404).json({
+        message: "User not found!",
+        error: "No account associated with this email.",
+      });
+    }
+
+    if (telecaller.status !== "Accepted") {
+      return res.status(403).json({
+        message: "Access denied!",
+        error: "Your account role is not 'Accepted'. Please contact admin.",
+      });
+    }
+
+    // Check password
+    const CUSTOMER = await Customer.findOne({ email: req.body.email });
+    console.log(CUSTOMER);
+
+    if (
+      CUSTOMER.password &&
+      bcrypt.compareSync(req.body.password, CUSTOMER.password)
+    ) {
+      const token = signInToken(telecaller);
+
+      return res.status(200).json({
+        token,
+        _id: telecaller._id,
+        name: telecaller.name,
+        email: telecaller.email,
+        address: telecaller.address,
+        phone: telecaller.phone,
+        image: telecaller.image,
+      });
+    } else {
+      return res.status(401).json({
+        message: "Invalid email or password!",
+        error: "Invalid credentials.",
+      });
+    }
+  } catch (err) {
+    console.error("Login Error:", err);
+    return res.status(500).json({
+      message: "Internal server error!",
+      error: err.message,
     });
   }
 };
@@ -585,4 +695,6 @@ module.exports = {
   getShippingAddress,
   updateShippingAddress,
   deleteShippingAddress,
+  addCustomerViaTelecaller,
+  loginTelecaller,
 };

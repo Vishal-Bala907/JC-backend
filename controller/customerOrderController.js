@@ -21,6 +21,8 @@ const addOrder = async (req, res) => {
       ...req.body,
       user: req.user._id,
     });
+
+    console.dir(newOrder);
     const order = await newOrder.save();
     res.status(201).send(order);
     handleProductQuantity(order.cart);
@@ -306,4 +308,5 @@ module.exports = {
   createOrderByRazorPay,
   addRazorpayOrder,
   sendEmailInvoiceToCustomer,
+  // addCustomerViaTelecaller,
 };
