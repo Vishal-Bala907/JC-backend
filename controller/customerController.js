@@ -159,6 +159,7 @@ const loginTelecaller = async (req, res) => {
       return res.status(404).json({
         message: "User not found!",
         error: "No account associated with this email.",
+        success: false,
       });
     }
 
@@ -166,6 +167,7 @@ const loginTelecaller = async (req, res) => {
       return res.status(403).json({
         message: "Access denied!",
         error: "Your account role is not 'Accepted'. Please contact admin.",
+        success: false,
       });
     }
 
@@ -187,11 +189,13 @@ const loginTelecaller = async (req, res) => {
         address: telecaller.address,
         phone: telecaller.phone,
         image: telecaller.image,
+        success: true,
       });
     } else {
       return res.status(401).json({
         message: "Invalid email or password!",
         error: "Invalid credentials.",
+        success: false,
       });
     }
   } catch (err) {
@@ -199,6 +203,7 @@ const loginTelecaller = async (req, res) => {
     return res.status(500).json({
       message: "Internal server error!",
       error: err.message,
+      success: false,
     });
   }
 };
