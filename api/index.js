@@ -21,6 +21,7 @@ const languageRoutes = require("../routes/languageRoutes");
 const notificationRoutes = require("../routes/notificationRoutes");
 const telecallerRoutes = require("../routes/telecallerRoutes");
 const partnerRoutes = require("../routes/partnerRoutes");
+const bikeRideRoutes = require("../routes/bikeriderRoute");
 const { isAuth, isAdmin } = require("../config/auth");
 // const {
 //   getGlobalSetting,
@@ -58,6 +59,7 @@ app.use("/api/language/", languageRoutes);
 app.use("/api/notification/", isAuth, notificationRoutes);
 app.use("/api/partners/", partnerRoutes);
 app.use("/api/tele/", telecallerRoutes);
+app.use("/api/rider/", bikeRideRoutes);
 
 //if you not use admin dashboard then these two route will not needed.
 app.use("/api/admin/", adminRoutes);
