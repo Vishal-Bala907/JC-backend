@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Telecaller = require("../models/Telecaller");
+const Customer = require("../models/Customer");
 
 // Create a new Telecaller (POST)
 router.post("/telecaller/add", async (req, res) => {
@@ -125,6 +126,29 @@ router.delete("/telecaller/:id", async (req, res) => {
     res.json({ message: "Telecaller deleted successfully" });
   } catch (error) {
     res.status(400).json({ error: "Invalid ID format" });
+  }
+});
+// Delete Telecaller (DELETE)
+// Get Telecaller Details (GET)
+router.get("/get-customer/:number", async (req, res) => {
+  const { number } = req.params;
+  console.log("hello " + number);
+
+  try {
+    const customer = await Customer.findOne({ phone: number });
+    if (!customer) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Telecaller not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Telecaller fetched successfully",
+      data: customer,
+    });
+  } catch (error) {
+    res.status(400).json({ status: false, message: "Invalid ID format" });
   }
 });
 
