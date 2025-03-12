@@ -1,5 +1,6 @@
 const BikeRider = require("../models/BikeRider");
 const Delivery = require("../models/Delivery");
+const Order = require("../models/Order");
 
 exports.addBikeRider = async (req, res) => {
   const {
@@ -80,7 +81,7 @@ exports.getRiderByNameOrNumber = async (req, res) => {
 };
 
 exports.assignBikeRider = async (req, res) => {
-  const { orderId, riderId } = req.params;
+  const { orderId, riderId, shopId } = req.params;
 
   try {
     // Check the current status of the BikeRider
@@ -103,10 +104,11 @@ exports.assignBikeRider = async (req, res) => {
       { new: true }
     );
 
-    // Save delivery data
+    // Save delivery data with shopId included
     const deliveryData = new Delivery({
       orderId,
       bikeRiderId: riderId,
+      storeId: shopId,
       orderAssignTime: new Date(),
     });
 
@@ -164,6 +166,8 @@ exports.updateOrderCompletionStatus = async (req, res) => {
       orderCompletionTime: new Date(),
       status: true,
     });
+    // Update order status to Delivered
+    await Order.findByIdAndUpdate(orderId, { status: "Delivered" });
 
     res.status(200).json({
       message:

@@ -60,4 +60,43 @@ router.put("/partner/:id/status", async (req, res) => {
   }
 });
 
+// GET API to fetch orders by zip code
+router.get("/orders/zip/:zipCode", async (req, res) => {
+  const { zipCode } = req.params;
+
+  try {
+    const orders = await Order.find({ "user_info.zipCode": zipCode });
+
+    if (orders.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No orders found for this zip code." });
+    }
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching orders by zip code:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+// GET API to fetch deliveries by storeId
+router.get("/deliveries/store/:storeId", async (req, res) => {
+  const { storeId } = req.params;
+
+  try {
+    const deliveries = await Delivery.find({ storeId });
+
+    if (!deliveries || deliveries.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No deliveries found for this store." });
+    }
+
+    res.status(200).json(deliveries);
+  } catch (error) {
+    console.error("Error fetching deliveries by storeId:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
 module.exports = router;

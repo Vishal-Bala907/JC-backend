@@ -11,6 +11,10 @@ const deliverySchema = new mongoose.Schema({
     ref: "BikeRider",
     required: true,
   },
+  storeId: {
+    type: String,
+    required: true,
+  },
   orderAssignTime: {
     type: Date,
     required: true,

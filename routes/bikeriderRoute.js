@@ -19,7 +19,7 @@ router.get("/get-all-riders", getAllBikeRiders);
 router.get("/get-rider/:identifier", getRiderByNameOrNumber);
 
 //reset-password
-router.get("/assign-rider/:orderId/:riderId", assignBikeRider);
+router.get("/assign-rider/:orderId/:riderId/:shopId", assignBikeRider);
 
 //add a staff
 router.put("/order-deliverd/:orderId/:riderId", updateOrderCompletionStatus);

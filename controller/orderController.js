@@ -149,29 +149,31 @@ const getOrderById = async (req, res) => {
   }
 };
 
-const updateOrder = (req, res) => {
+const updateOrder = async (req, res) => {
   const newStatus = req.body.status;
-  Order.updateOne(
-    {
-      _id: req.params.id,
-    },
-    {
-      $set: {
-        status: newStatus,
-      },
-    },
-    (err) => {
-      if (err) {
-        res.status(500).send({
-          message: err.message,
-        });
-      } else {
-        res.status(200).send({
-          message: "Order Updated Successfully!",
-        });
-      }
+
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).send({ message: "Order not found" });
     }
-  );
+
+    if (order.status === "Delivered") {
+      return res
+        .status(400)
+        .send({ message: "Order is already marked as Delivered" });
+    }
+
+    await Order.updateOne(
+      { _id: req.params.id },
+      { $set: { status: newStatus } }
+    );
+
+    res.status(200).send({ message: "Order Updated Successfully!" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
 };
 
 const deleteOrder = (req, res) => {
