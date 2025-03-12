@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Partner = require("../models/Partner");
+const Order = require("../models/Order");
 
 // Create a new Store Owner (POST)
 router.post("/partner/add", async (req, res) => {
