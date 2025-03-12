@@ -10,7 +10,7 @@ const {
 const router = express.Router();
 
 //register a staff
-router.post("/add-rider", addBikeRider);
+router.post("/add-rider/:partnerId", addBikeRider);
 
 //login a admin
 router.get("/get-all-riders", getAllBikeRiders);

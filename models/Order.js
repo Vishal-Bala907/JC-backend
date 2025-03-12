@@ -69,6 +69,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    riderName: {
+      type: String,
+      default: "",
+    },
     cardInfo: {
       type: Object,
       required: false,

@@ -21,6 +21,7 @@ const {
   deleteShippingAddress,
   addCustomerViaTelecaller,
   loginTelecaller,
+  loginStorePartner,
 } = require("../controller/customerController");
 const {
   passwordVerificationLimit,
@@ -54,6 +55,7 @@ router.post("/tele/add-customer", addCustomerViaTelecaller);
 //login a user
 router.post("/login", loginCustomer);
 router.post("/login-tele", loginTelecaller);
+router.post("/login-stp", loginStorePartner);
 
 //register or login with google and fb
 router.post("/signup/oauth", signUpWithOauthProvider);

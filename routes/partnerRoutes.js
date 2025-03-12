@@ -62,11 +62,11 @@ router.put("/partner/:id/status", async (req, res) => {
 });
 
 // GET API to fetch orders by zip code
-router.get("/orders/zip/:zipCode", async (req, res) => {
+router.get("/orders/zip-5/:zipCode", async (req, res) => {
   const { zipCode } = req.params;
 
   try {
-    const orders = await Order.find({ "user_info.zipCode": zipCode });
+    const orders = await Order.find({ "user_info.zipCode": zipCode }).limit(5); // Limit the result to 5 orders
 
     if (orders.length === 0) {
       return res
@@ -80,6 +80,38 @@ router.get("/orders/zip/:zipCode", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
+
+router.get("/orders/zip/:zipCode", async (req, res) => {
+  const { zipCode } = req.params;
+  const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = parseInt(req.query.limit) || 5; // Default to 5 records per page
+
+  try {
+    const totalOrders = await Order.countDocuments({
+      "user_info.zipCode": zipCode,
+    }); // Count total orders
+    const orders = await Order.find({ "user_info.zipCode": zipCode })
+      .skip((page - 1) * limit) // Skip previous pages
+      .limit(limit); // Limit records per page
+
+    if (orders.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No orders found for this zip code." });
+    }
+
+    res.status(200).json({
+      totalOrders,
+      currentPage: page,
+      totalPages: Math.ceil(totalOrders / limit),
+      orders,
+    });
+  } catch (error) {
+    console.error("Error fetching orders by zip code:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
 // GET API to fetch deliveries by storeId
 router.get("/deliveries/store/:storeId", async (req, res) => {
   const { storeId } = req.params;

@@ -1,6 +1,7 @@
 const BikeRider = require("../models/BikeRider");
 const Delivery = require("../models/Delivery");
 const Order = require("../models/Order");
+const Partner = require("../models/Partner");
 
 exports.addBikeRider = async (req, res) => {
   const {
@@ -15,6 +16,7 @@ exports.addBikeRider = async (req, res) => {
     vehicleDetails,
     address,
   } = req.body;
+  const { partnerId } = req.params;
 
   try {
     // Check if the bike rider already exists
@@ -23,11 +25,19 @@ exports.addBikeRider = async (req, res) => {
       return res.status(400).json({ message: "Username already exists" });
     }
 
-    // Hash password before saving
+    // Check if the partner (store) exists
+    const partner = await Partner.findById(partnerId);
+    if (!partner) {
+      return res.status(400).json({ message: "Store not found" });
+    }
 
+    // Hash the password before saving
+    // const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new bike rider
     const newBikeRider = new BikeRider({
       username,
-      password,
+      password: password,
       fullName,
       phoneNumber,
       email,
@@ -38,8 +48,16 @@ exports.addBikeRider = async (req, res) => {
       address,
     });
 
-    await newBikeRider.save();
-    res.status(201).json({ message: "Bike rider added successfully" });
+    // Save bike rider
+    const savedRider = await newBikeRider.save();
+
+    // Add rider to the partner's `riders` array
+    partner.riders.push(savedRider._id);
+    await partner.save(); // Save the updated partner
+
+    res
+      .status(201)
+      .json({ message: "Bike rider added successfully", savedRider });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error, unable to add bike rider" });
@@ -82,7 +100,15 @@ exports.getRiderByNameOrNumber = async (req, res) => {
 
 exports.assignBikeRider = async (req, res) => {
   const { orderId, riderId, shopId } = req.params;
+  // Check if the order is already assigned to another rider
+  const existingDelivery = await Delivery.findOne({ orderId });
 
+  if (existingDelivery) {
+    return res.status(400).json({
+      message: "Order is already assigned to another rider",
+    });
+  }
+  //
   try {
     // Check the current status of the BikeRider
     const bikeRider = await BikeRider.findById(riderId);
@@ -91,18 +117,16 @@ exports.assignBikeRider = async (req, res) => {
       return res.status(404).json({ message: "Bike rider not found" });
     }
 
-    if (bikeRider.status === true) {
-      return res
-        .status(400)
-        .json({ message: "Rider is already on his way to deliver an order" });
+    const rider = await BikeRider.findById(riderId);
+    let order = await Order.findOne({ invoice: orderId });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
 
-    // Update BikeRider status to true only if status is false
-    const updatedRider = await BikeRider.findByIdAndUpdate(
-      riderId,
-      { status: true },
-      { new: true }
-    );
+    order.riderName = rider.fullName;
+
+    await order.save();
 
     // Save delivery data with shopId included
     const deliveryData = new Delivery({
@@ -116,7 +140,7 @@ exports.assignBikeRider = async (req, res) => {
 
     res.status(200).json({
       message: "Rider status updated and delivery data saved successfully",
-      updatedRider,
+      bikeRider,
       deliveryData,
     });
   } catch (error) {
@@ -195,7 +219,18 @@ exports.pendingDeliveries = async (req, res) => {
       return res.status(404).json({ message: "No pending deliveries found" });
     }
 
-    res.status(200).json(pendingDeliveries);
+    // Fetch all orders in parallel
+    const data = await Promise.all(
+      pendingDeliveries.map(async (pending) => {
+        const order = await Order.findOne({ invoice: pending.orderId }); // Use `findOne`
+        return {
+          ...pending._doc, // Spread the existing pending delivery data
+          order, // Attach the order details
+        };
+      })
+    );
+
+    res.status(200).json(data);
   } catch (error) {
     console.error(error);
     res

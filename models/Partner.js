@@ -65,6 +65,7 @@ const partnerSchema = new mongoose.Schema(
       default: "Hold", // Default value set at the schema level
       required: true,
     },
+    riders: [{ type: mongoose.Schema.Types.ObjectId, ref: "BikeRider" }],
   },
   { timestamps: true }
 );

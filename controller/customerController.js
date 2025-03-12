@@ -12,6 +12,7 @@ const {
 } = require("../lib/email-sender/templates/forget-password");
 const { sendVerificationCode } = require("../lib/phone-verification/sender");
 const Telecaller = require("../models/Telecaller");
+const Partner = require("../models/Partner");
 
 const verifyEmailAddress = async (req, res) => {
   const isAdded = await Customer.findOne({ email: req.body.email });
@@ -189,6 +190,68 @@ const loginTelecaller = async (req, res) => {
         address: telecaller.address,
         phone: telecaller.phone,
         image: telecaller.image,
+        success: true,
+      });
+    } else {
+      return res.status(401).json({
+        message: "Invalid email or password!",
+        error: "Invalid credentials.",
+        success: false,
+      });
+    }
+  } catch (err) {
+    console.error("Login Error:", err);
+    return res.status(500).json({
+      message: "Internal server error!",
+      error: err.message,
+      success: false,
+    });
+  }
+};
+const loginStorePartner = async (req, res) => {
+  // console.log(req.body);
+
+  try {
+    const partner = await Partner.findOne({ email: req.body.email }).populate(
+      "riders"
+    );
+
+    // Check if telecaller exists and role is 'Accepted'
+    if (!partner) {
+      return res.status(404).json({
+        message: "User not found!",
+        error: "No account associated with this email.",
+        success: false,
+      });
+    }
+
+    if (partner.status !== "Accepted") {
+      return res.status(403).json({
+        message: "Access denied!",
+        error: "Your account role is not 'Accepted'. Please contact admin.",
+        success: false,
+      });
+    }
+
+    // Check password
+    const CUSTOMER = await Customer.findOne({ email: req.body.email });
+    // console.log(CUSTOMER);
+
+    if (
+      CUSTOMER.password &&
+      bcrypt.compareSync(req.body.password, CUSTOMER.password)
+    ) {
+      const token = signInToken(partner);
+
+      return res.status(200).json({
+        token,
+        _id: partner._id,
+        partner: partner,
+        name: partner.name,
+        email: partner.email,
+        address: partner.address,
+        phone: partner.phone,
+        image: partner.image,
         success: true,
       });
     } else {
@@ -702,4 +765,5 @@ module.exports = {
   deleteShippingAddress,
   addCustomerViaTelecaller,
   loginTelecaller,
+  loginStorePartner,
 };
