@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Partner = require("../models/Partner");
 const Order = require("../models/Order");
+const Delivery = require("../models/Delivery");
 
 // Create a new Store Owner (POST)
 router.post("/partner/add", async (req, res) => {
@@ -129,6 +130,91 @@ router.get("/deliveries/store/:storeId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching deliveries by storeId:", error);
     res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+// GET: Dashboard Metrics for a specific store
+router.get("/store/:storeId/stats", async (req, res) => {
+  try {
+    const { storeId } = req.params;
+
+    // Date calculations
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const startOfYesterday = new Date();
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+    startOfYesterday.setHours(0, 0, 0, 0);
+
+    const endOfYesterday = new Date();
+    endOfYesterday.setDate(endOfYesterday.getDate() - 1);
+    endOfYesterday.setHours(23, 59, 59, 999);
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Aggregation pipeline for income calculations
+    const incomeStats = await Delivery.aggregate([
+      { $match: { storeId } },
+      {
+        $facet: {
+          todayIncome: [
+            { $match: { createdAt: { $gte: startOfDay } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+          ],
+          yesterdayIncome: [
+            {
+              $match: {
+                createdAt: { $gte: startOfYesterday, $lte: endOfYesterday },
+              },
+            },
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+          ],
+          thisMonthIncome: [
+            { $match: { createdAt: { $gte: startOfMonth } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+          ],
+          allTimeIncome: [
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+          ],
+        },
+      },
+    ]);
+
+    // Order counts
+    const totalOrders = await Delivery.countDocuments({ storeId });
+    const processingOrders = await Delivery.countDocuments({
+      storeId,
+      status: false,
+    });
+    const pendingOrders = await Delivery.countDocuments({
+      storeId,
+      orderCompletionTime: null,
+    });
+    const deliveredOrders = await Delivery.countDocuments({
+      storeId,
+      status: true,
+    });
+
+    // Response
+    res.json({
+      income: {
+        today: incomeStats[0].todayIncome[0]?.total || 0,
+        yesterday: incomeStats[0].yesterdayIncome[0]?.total || 0,
+        thisMonth: incomeStats[0].thisMonthIncome[0]?.total || 0,
+        allTime: incomeStats[0].allTimeIncome[0]?.total || 0,
+      },
+      orders: {
+        total: totalOrders,
+        processing: processingOrders,
+        pending: pendingOrders,
+        delivered: deliveredOrders,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching store stats:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
