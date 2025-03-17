@@ -126,6 +126,7 @@ const addCustomerViaTelecaller = async (req, res) => {
     }
 
     // Create a new customer
+    const pwd = bcrypt.hashSync(password);
     const newCustomer = new Customer({
       name,
       image,
@@ -134,8 +135,8 @@ const addCustomerViaTelecaller = async (req, res) => {
       city,
       shippingAddress,
       email,
-      phone,
-      password,
+      phone: phone,
+      password: pwd,
     });
 
     // Save the customer to the database

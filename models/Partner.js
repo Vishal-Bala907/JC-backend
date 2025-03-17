@@ -35,6 +35,10 @@ const partnerSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    address: {
+      type: String,
+      required: true,
+    },
     pan: {
       type: String,
       required: true,
