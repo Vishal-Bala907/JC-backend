@@ -4,8 +4,8 @@ const { connectDB } = require("../config/db");
 const Admin = require("../models/Admin");
 const adminData = require("../utils/admin");
 
-const Customer = require("../models/Customer");
-const customerData = require("../utils/customers");
+// const Customer = require("../models/Customer");
+// const customerData = require("../utils/customers");
 
 const Coupon = require("../models/Coupon");
 const couponData = require("../utils/coupon");
@@ -13,17 +13,17 @@ const couponData = require("../utils/coupon");
 const Product = require("../models/Product");
 const productData = require("../utils/products");
 
-const Order = require("../models/Order");
-const orderData = require("../utils/orders");
+// const Order = require("../models/Order");
+// const orderData = require("../utils/orders");
 
 const Category = require("../models/Category");
 const categoryData = require("../utils/categories");
 
-const Language = require("../models/Language");
-const languageData = require("../utils/language");
+// const Language = require("../models/Language");
+// const languageData = require("../utils/language");
 
-const Currency = require("../models/Currency");
-const currencyData = require("../utils/currency");
+// const Currency = require("../models/Currency");
+// const currencyData = require("../utils/currency");
 
 const Attribute = require("../models/Attribute");
 const attributeData = require("../utils/attributes");
@@ -52,8 +52,8 @@ const importData = async () => {
     // await Category.deleteMany();
     // await Category.insertMany(categoryData);
 
-    // await Product.deleteMany();
-    // await Product.insertMany(productData);
+    await Product.deleteMany();
+    await Product.insertMany(productData);
 
     // await Coupon.deleteMany();
     // await Coupon.insertMany(couponData);
