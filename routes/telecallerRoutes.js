@@ -136,6 +136,7 @@ router.get("/get-customer/:number", async (req, res) => {
 
   try {
     const customer = await Customer.findOne({ phone: number });
+
     if (!customer) {
       return res
         .status(404)

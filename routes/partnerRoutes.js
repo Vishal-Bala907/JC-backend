@@ -8,10 +8,11 @@ const Delivery = require("../models/Delivery");
 router.post("/partner/add", async (req, res) => {
   try {
     const newOwner = new Partner(req.body);
-    await newOwner.save();
-    res
-      .status(201)
-      .json({ message: "Store owner created successfully", data: newOwner });
+    console.log(newOwner);
+    // await newOwner.save();
+    // res
+    //   .status(201)
+    //   .json({ message: "Store owner created successfully", data: newOwner });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
