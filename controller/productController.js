@@ -12,6 +12,7 @@ const addProduct = async (req, res) => {
         ? req.body.productId
         : mongoose.Types.ObjectId(),
     });
+    //  console.log('product data',req.body)
 
     await newProduct.save();
     res.send(newProduct);
@@ -178,6 +179,7 @@ const updateProduct = async (req, res) => {
       product.prices = req.body.prices;
       product.image = req.body.image;
       product.tag = req.body.tag;
+      product.commision = req.body.commision;
 
       await product.save();
       res.send({ data: product, message: "Product updated successfully!" });

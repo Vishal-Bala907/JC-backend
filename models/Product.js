@@ -22,6 +22,11 @@ const productSchema = new mongoose.Schema(
       type: Object,
       required: false,
     },
+    commision: {
+      type: Number,
+      required: true,
+      
+    },
     slug: {
       type: String,
       required: true,
