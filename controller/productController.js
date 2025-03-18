@@ -179,7 +179,7 @@ const updateProduct = async (req, res) => {
       product.prices = req.body.prices;
       product.image = req.body.image;
       product.tag = req.body.tag;
-      product.commision = req.body.commision;
+      product.commission = req.body.commission;
 
       await product.save();
       res.send({ data: product, message: "Product updated successfully!" });
