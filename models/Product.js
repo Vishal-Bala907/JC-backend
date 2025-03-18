@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema(
       type: Object,
       required: false,
     },
-    commision: {
+    commission: {
       type: Number,
       required: true,
       

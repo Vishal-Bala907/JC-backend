@@ -17,9 +17,10 @@ const addProduct = async (req, res) => {
     await newProduct.save();
     res.send(newProduct);
   } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
+    console.log("error in add product", err),
+      res.status(500).send({
+        message: err.message,
+      });
   }
 };
 
@@ -190,7 +191,7 @@ const updateProduct = async (req, res) => {
     }
   } catch (err) {
     res.status(404).send(err.message);
-    // console.log('err',err)
+    console.log("err in update:", err);
   }
 };
 
