@@ -9,12 +9,23 @@ router.post("/partner/add", async (req, res) => {
   try {
     const newOwner = new Partner(req.body);
     console.log(newOwner);
-    // await newOwner.save();
-    // res
-    //   .status(201)
-    //   .json({ message: "Store owner created successfully", data: newOwner });
+    await newOwner.save();
+    res
+      .status(201)
+      .json({ message: "Store owner created successfully", data: newOwner });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get("/partner/rider/:id", async (req, res) => {
+  try {
+    const rider = await Partner.findById(req.params.id).populate("riders");
+    if (!rider)
+      return res.status(404).json({ message: "Bike rider not found" });
+    res.json(rider.riders);
+  } catch (error) {
+    res.status(400).json({ error: "Invalid ID format" });
   }
 });
 

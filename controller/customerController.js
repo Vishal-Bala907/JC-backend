@@ -15,31 +15,69 @@ const Telecaller = require("../models/Telecaller");
 const Partner = require("../models/Partner");
 
 const verifyEmailAddress = async (req, res) => {
-  const isAdded = await Customer.findOne({ email: req.body.email });
-  if (isAdded) {
-    return res.status(403).send({
-      message: "This Email already Added!",
-    });
-  } else {
-    const token = tokenForVerify(req.body);
-    const option = {
-      name: req.body.name,
-      email: req.body.email,
-      token: token,
-    };
-    const body = {
-      from: process.env.EMAIL_USER,
-      // from: "info@demomailtrap.com",
-      to: `${req.body.email}`,
-      subject: "Email Activation",
-      subject: "Verify Your Email",
-      html: customerRegisterBody(option),
-    };
+  const phone = req.body.phone;
+  const email = req.body.email;
+  const existingCustomer = await Customer.findOne({
+    $or: [{ email }, { phone }],
+  });
 
-    const message = "Please check your email to verify your account!";
-    sendEmail(body, res, message);
+  if (existingCustomer) {
+    return res
+      .status(400)
+      .json({ error: "Email or phone number already exists." });
+  } else {
+    const pwd = bcrypt.hashSync(req.body.password);
+
+    const name = req.body.name;
+
+    const newCustomer = new Customer({
+      name,
+      email,
+      phone,
+      password: pwd,
+    });
+    try {
+      await newCustomer.save();
+    } catch (err) {
+      return res.status(500).send({
+        message: err.message,
+      });
+    }
+
+    res.status(201).json({
+      message: "Customer created successfully",
+      customer: newCustomer,
+    });
   }
 };
+// const verifyEmailAddress = async (req, res) => {
+//   const isAdded = await Customer.findOne({ email: req.body.email });
+//   if (isAdded) {
+//     return res.status(403).send({
+//       message: "This Email already Added!",
+//     });
+//   } else {
+//     console.log(req.body);
+
+//     // const token = tokenForVerify(req.body);
+//     // const option = {
+//     //   name: req.body.name,
+//     //   email: req.body.email,
+//     //   token: token,
+//     // };
+//     // const body = {
+//     //   from: process.env.EMAIL_USER,
+//     //   // from: "info@demomailtrap.com",
+//     //   to: `${req.body.email}`,
+//     //   subject: "Email Activation",
+//     //   subject: "Verify Your Email",
+//     //   html: customerRegisterBody(option),
+//     // };
+
+//     // const message = "Please check your email to verify your account!";
+//     // sendEmail(body, res, message);
+//   }
+// };
 
 const verifyPhoneNumber = async (req, res) => {
   const phoneNumber = req.body.phone;
@@ -140,7 +178,7 @@ const addCustomerViaTelecaller = async (req, res) => {
     });
 
     // Save the customer to the database
-    console.dir(newCustomer);
+    // console.dir(newCustomer);
     await newCustomer.save();
 
     res.status(201).json({
