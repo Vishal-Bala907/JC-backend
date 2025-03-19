@@ -125,7 +125,7 @@ exports.assignBikeRider = async (req, res) => {
     }
 
     order.riderName = rider.fullName;
-
+    order.status = "Processing";
     await order.save();
 
     // Save delivery data with shopId included
