@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Telecaller = require("../models/Telecaller");
 const Customer = require("../models/Customer");
+const Order = require("../models/Order");
 const Partner = require("../models/Partner");
 
 // Create a new Telecaller (POST)
@@ -78,7 +79,33 @@ router.get("/telecaller/:id", async (req, res) => {
     res.status(400).json({ error: "Invalid ID format" });
   }
 });
+router.post("/telecaller/addorder/:id", async (req, res) => {
+  try {
+    const telecaller = await Telecaller.findById(req.params.id);
+    if (!telecaller) {
+      return res.status(404).json({ message: "Telecaller not found" });
+    }
+    const { order, commission } = req.body;
+    const newOrder = new Order(order);
+    const order1 = await newOrder.save();
 
+    telecaller.orders.push(order1._id);
+    telecaller.commission += commission;
+    telecaller.totalIncome += commission;
+    telecaller.remainingbalance += commission;
+    const UpdatedTelecaller = await telecaller.save();
+    res.status(201).json({
+      message: "Order added successfully",
+      orderData: order1,
+      telecallerData: UpdatedTelecaller,
+    });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: `Error while Adding Order By Telecaller: ${error}` });
+    console.log("Error while Adding Order By Telecaller:", error);
+  }
+});
 // Get All Telecallers (GET)
 router.get("/telecallers/all", async (req, res) => {
   try {
