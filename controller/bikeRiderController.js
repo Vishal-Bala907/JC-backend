@@ -74,6 +74,95 @@ exports.getAllBikeRiders = async (req, res) => {
       .json({ message: "Server error, unable to fetch bike riders" });
   }
 };
+
+exports.loginBikeRider = async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // Find the bike rider by username
+    const bikeRider = await BikeRider.findOne({ username });
+
+    if (!bikeRider) {
+      return res.status(404).json({ message: "Bike rider not found" });
+    }
+
+    // Check if the password is correct
+    if (bikeRider.password !== password) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    res.status(200).json(bikeRider);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Server error, unable to login bike rider" });
+  }
+};
+
+exports.updateOrderDeleveryStatus = async (req, res) => {
+  const { orderId, deliveryId, status } = req.params;
+  console.log({ orderId, deliveryId, status });
+  // console.log(status === "true");
+  try {
+    const delivery = await Delivery.findById(deliveryId);
+    const order = await Order.findOne({ invoice: orderId });
+    if (!delivery || !order) {
+      return res.status(404).json({ message: "Delivery or Oder not found" });
+    }
+    if (status === "true") {
+      // order deliverd
+      delivery.status = status;
+      delivery.orderCompletionTime = new Date();
+      delivery.amount = order.total;
+      try {
+        delivery.save();
+      } catch (err) {
+        console.log(err);
+        return res
+          .status(500)
+          .json({ message: "Server error, unable to handle order" });
+      }
+      order.status = "Delivered";
+      try {
+        order.save();
+      } catch (err) {
+        console.log(err);
+        return res
+          .status(500)
+          .json({ message: "Server error, unable to handle order" });
+      }
+
+      return res.status(200).json({ message: "Order Delevered Successfully" });
+    } else {
+      delivery.status = status;
+      delivery.orderCompletionTime = 0;
+      delivery.amount = 0;
+      try {
+        delivery.save();
+      } catch (err) {
+        console.log(err);
+        return res
+          .status(500)
+          .json({ message: "Server error, unable to handle order" });
+      }
+      order.status = "Cancelled";
+      try {
+        order.save();
+      } catch (err) {
+        console.log(err);
+        return res
+          .status(500)
+          .json({ message: "Server error, unable to handle order" });
+      }
+      return res.status(200).json({ message: "Order Canceled Successfully" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error, unable to handle order" });
+  }
+};
+
 exports.getRiderByNameOrNumber = async (req, res) => {
   const { identifier } = req.params;
 

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Telecaller = require("../models/Telecaller");
 const Customer = require("../models/Customer");
+const Partner = require("../models/Partner");
 
 // Create a new Telecaller (POST)
 router.post("/telecaller/add", async (req, res) => {
@@ -150,6 +151,21 @@ router.get("/get-customer/:number", async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ status: false, message: "Invalid ID format" });
+  }
+});
+
+router.get("/get/pincodes", async (req, res) => {
+  try {
+    const partners = await Partner.find({ status: "Accepted" });
+
+    // Extract pincodes correctly
+    const pincodes = partners.map((prt) => prt.pinCode);
+
+    return res.status(200).json({ message: pincodes });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 

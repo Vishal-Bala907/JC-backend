@@ -4,13 +4,20 @@ const {
   getAllBikeRiders,
   getRiderByNameOrNumber,
   assignBikeRider,
-  updateOrderCompletionStatus,
   pendingDeliveries,
+  loginBikeRider,
+  updateOrderDeleveryStatus,
+  updateOrderCompletionStatus,
 } = require("../controller/bikeRiderController");
 const router = express.Router();
 
 //register a staff
 router.post("/add-rider/:partnerId", addBikeRider);
+router.post("/login-rider", loginBikeRider);
+router.get(
+  "/update-delevery/:orderId/:deliveryId/:status",
+  updateOrderDeleveryStatus
+);
 
 //login a admin
 router.get("/get-all-riders", getAllBikeRiders);
