@@ -150,6 +150,11 @@ router.get("/store/:storeId/stats", async (req, res) => {
   try {
     const { storeId } = req.params;
 
+    const store = await Partner.findById(storeId);
+    if (!store) {
+      return res.status(404).json({ message: "Store not found" });
+    }
+
     // Date calculations
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -196,19 +201,66 @@ router.get("/store/:storeId/stats", async (req, res) => {
 
     // Order counts
     const totalOrders = await Delivery.countDocuments({ storeId });
-    const processingOrders = await Delivery.countDocuments({
-      storeId,
-      status: false,
-    });
-    const pendingOrders = await Delivery.countDocuments({
-      storeId,
-      orderCompletionTime: null,
-    });
+    const [processingOrders, pendingOrders, cancelOrders] = await Promise.all([
+      Delivery.aggregate([
+        { $match: { storeId } },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "orderId",
+            foreignField: "invoice",
+            as: "order",
+          },
+        },
+        { $unwind: "$order" },
+        { $match: { "order.status": "Processing" } },
+        { $count: "count" },
+      ]),
+
+      Delivery.aggregate([
+        { $match: { storeId } },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "orderId",
+            foreignField: "invoice",
+            as: "order",
+          },
+        },
+        { $unwind: "$order" },
+        { $match: { "order.status": "Pending" } },
+        { $count: "count" },
+      ]),
+
+      Delivery.aggregate([
+        { $match: { storeId } },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "orderId",
+            foreignField: "invoice",
+            as: "order",
+          },
+        },
+        { $unwind: "$order" },
+        { $match: { "order.status": "Cancelled" } },
+        { $count: "count" },
+      ]),
+    ]);
+
     const deliveredOrders = await Delivery.countDocuments({
       storeId,
       status: true,
     });
 
+    // console.log(pendingOrders, cancelOrders, processingOrders);
+    const pinCode = store.pinCode;
+    console.log(pinCode);
+
+    const pending = await Order.countDocuments({
+      "user_info.zipCode": pinCode,
+      status: "Pending",
+    });
     // Response
     res.json({
       income: {
@@ -219,9 +271,10 @@ router.get("/store/:storeId/stats", async (req, res) => {
       },
       orders: {
         total: totalOrders,
-        processing: processingOrders,
-        pending: pendingOrders,
+        processing: processingOrders[0]?.count || 0,
+        pending: pending || 0,
         delivered: deliveredOrders,
+        canceled: cancelOrders[0]?.count || 0,
       },
     });
   } catch (error) {

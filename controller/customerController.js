@@ -193,6 +193,7 @@ const addCustomerViaTelecaller = async (req, res) => {
 const loginTelecaller = async (req, res) => {
   try {
     const telecaller = await Telecaller.findOne({ email: req.body.email });
+    console.log(telecaller);
 
     // Check if telecaller exists and role is 'Accepted'
     if (!telecaller) {
@@ -227,7 +228,7 @@ const loginTelecaller = async (req, res) => {
         name: telecaller.name,
         email: telecaller.email,
         address: telecaller.address,
-        phone: telecaller.phone,
+        phone: telecaller.mobile,
         image: telecaller.image,
         success: true,
       });

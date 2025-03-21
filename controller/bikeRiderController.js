@@ -103,63 +103,47 @@ exports.loginBikeRider = async (req, res) => {
 exports.updateOrderDeleveryStatus = async (req, res) => {
   const { orderId, deliveryId, status } = req.params;
   console.log({ orderId, deliveryId, status });
-  // console.log(status === "true");
+
   try {
     const delivery = await Delivery.findById(deliveryId);
     const order = await Order.findOne({ invoice: orderId });
+
     if (!delivery || !order) {
-      return res.status(404).json({ message: "Delivery or Oder not found" });
+      return res.status(404).json({ message: "Delivery or Order not found" });
     }
+
     if (status === "true") {
-      // order deliverd
+      // Order delivered
       delivery.status = status;
       delivery.orderCompletionTime = new Date();
       delivery.amount = order.total;
-      try {
-        delivery.save();
-      } catch (err) {
-        console.log(err);
-        return res
-          .status(500)
-          .json({ message: "Server error, unable to handle order" });
-      }
-      order.status = "Delivered";
-      try {
-        order.save();
-      } catch (err) {
-        console.log(err);
-        return res
-          .status(500)
-          .json({ message: "Server error, unable to handle order" });
-      }
 
-      return res.status(200).json({ message: "Order Delevered Successfully" });
-    } else {
+      await delivery.save(); // ✅ Await to ensure it's saved
+
+      order.status = "Delivered";
+      await order.save(); // ✅ Await to ensure it's saved
+
+      return res.status(200).json({ message: "Order Delivered Successfully" });
+    } else if (status === "false") {
+      // Order canceled
       delivery.status = status;
       delivery.orderCompletionTime = 0;
       delivery.amount = 0;
-      try {
-        delivery.save();
-      } catch (err) {
-        console.log(err);
-        return res
-          .status(500)
-          .json({ message: "Server error, unable to handle order" });
-      }
+
+      await delivery.save(); // ✅ Await to ensure it's saved
+
       order.status = "Cancelled";
-      try {
-        order.save();
-      } catch (err) {
-        console.log(err);
-        return res
-          .status(500)
-          .json({ message: "Server error, unable to handle order" });
-      }
+      await order.save(); // ✅ Await to ensure it's saved
+
       return res.status(200).json({ message: "Order Canceled Successfully" });
+    } else {
+      return res.status(400).json({ message: "Invalid status value" });
     }
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server error, unable to handle order" });
+    console.error(err);
+    return res
+      .status(500)
+      .json({ message: "Server error, unable to handle order" });
   }
 };
 
@@ -308,18 +292,32 @@ exports.pendingDeliveries = async (req, res) => {
       return res.status(404).json({ message: "No pending deliveries found" });
     }
 
-    // Fetch all orders in parallel
     const data = await Promise.all(
       pendingDeliveries.map(async (pending) => {
-        const order = await Order.findOne({ invoice: pending.orderId }); // Use `findOne`
+        const order = await Order.findOne({
+          invoice: pending.orderId,
+          status: "Processing",
+        });
+
+        if (!order) return null; // Skip orders that are not "Processing"
+
         return {
-          ...pending._doc, // Spread the existing pending delivery data
-          order, // Attach the order details
+          ...pending._doc,
+          order,
         };
       })
     );
 
-    res.status(200).json(data);
+    // Filter out null values (i.e., deliveries where order.status !== "Processing")
+    const filteredData = data.filter((item) => item !== null);
+
+    if (!filteredData.length) {
+      return res.status(404).json({
+        message: "No pending deliveries with Processing orders found",
+      });
+    }
+
+    res.status(200).json(filteredData);
   } catch (error) {
     console.error(error);
     res

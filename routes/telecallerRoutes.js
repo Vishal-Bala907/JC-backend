@@ -188,11 +188,15 @@ router.get("/get/pincodes", async (req, res) => {
     // Extract pincodes correctly
     const pincodes = partners.map((prt) => prt.pinCode);
 
-    return res.status(200).json({ message: pincodes });
+    return res.status(200).json({ success: true, message: pincodes });
   } catch (error) {
     return res
       .status(500)
-      .json({ error: "Internal Server Error", details: error.message });
+      .json({
+        success: false,
+        error: "Internal Server Error",
+        details: error.message,
+      });
   }
 });
 
