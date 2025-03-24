@@ -104,6 +104,7 @@ router.get("/orders/zip/:zipCode", async (req, res) => {
       "user_info.zipCode": zipCode,
     }); // Count total orders
     const orders = await Order.find({ "user_info.zipCode": zipCode })
+      .sort({ createdAt: -1 }) // Sort by newest first
       .skip((page - 1) * limit) // Skip previous pages
       .limit(limit); // Limit records per page
 
@@ -129,6 +130,7 @@ router.get("/orders/zip/:zipCode/pending", async (req, res) => {
   const { zipCode } = req.params;
   const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
   const limit = parseInt(req.query.limit) || 5; // Default to 5 records per page
+  console.log("hello");
 
   try {
     const filter = {
@@ -137,9 +139,11 @@ router.get("/orders/zip/:zipCode/pending", async (req, res) => {
     };
 
     const totalOrders = await Order.countDocuments(filter); // Count total matching orders
-    const orders = await Order.find(filter)
+
+    const orders = await Order.find(filter) // ✅ Correct filter applied
+      .sort({ createdAt: -1 }) // Sort by newest first
       .skip((page - 1) * limit) // Skip previous pages
-      .limit(limit); // Limit records per page
+      .limit(limit);
 
     if (orders.length === 0) {
       return res.status(404).json({
