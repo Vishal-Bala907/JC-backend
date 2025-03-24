@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const path = require("path");
+const { Server } = require("socket.io");
+const http = require("http");
 // const http = require("http");
 // const { Server } = require("socket.io");
 
@@ -83,15 +85,41 @@ app.use((err, req, res, next) => {
 app.use("/static", express.static("public"));
 
 // Serve the index.html file for all routes
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "build", "index.html"));
+// });
 
 const PORT = process.env.PORT || 5000;
 
 // const server = http.createServer(app);
 
-app.listen(PORT, () => console.log(`server running on port ${PORT}`));
+const IO_SERVER = http.createServer(app);
+const IO = new Server(IO_SERVER, {
+  cors: {
+    origin: ["http://localhost:3000", "http://localhost:2703"], //add your origin here instead of this http://localhost:3000
+    methods: ["PUT", "GET", "POST", "DELETE", "PATCH", "OPTIONS"],
+    credentials: true,
+  },
+});
+
+IO.on("connection", (socket) => {
+  // console.log("user connected");
+
+  socket.on("order-placed", (order) => {
+    const orderObject = {
+      user: order.user_info.name,
+      message: "Order Placed",
+      pincode: order.user_info.zipCode,
+    };
+    // console.log(orderObject);
+    IO.emit("order-received", orderObject);
+  });
+
+  // disconnect handle
+  socket.on("disconnect", () => {});
+});
+
+IO_SERVER.listen(PORT, () => console.log(`server running on port ${PORT}`));
 
 // app.listen(PORT, () => console.log(`server running on port ${PORT}`));
 
