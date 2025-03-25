@@ -325,3 +325,27 @@ exports.pendingDeliveries = async (req, res) => {
       .json({ message: "Server error, unable to fetch pending deliveries" });
   }
 };
+
+exports.deleteRider = async (req, res) => {
+  const { riderId } = req.params;
+
+  // Validate ObjectId
+  if (!riderId) {
+    return res.status(400).json({ message: "Invalid rider ID format" });
+  }
+
+  try {
+    // Check if the rider exists
+    const rider = await BikeRider.findById(riderId);
+    if (!rider) {
+      return res.status(404).json({ message: "Bike rider not found" });
+    }
+
+    // Delete the rider
+    await BikeRider.findByIdAndDelete(riderId);
+    res.status(200).json({ message: "Bike rider deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting bike rider:", error);
+    res.status(500).json({ message: "Server error, unable to delete rider" });
+  }
+};

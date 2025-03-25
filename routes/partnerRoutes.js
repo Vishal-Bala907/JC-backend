@@ -347,4 +347,33 @@ router.put("/update/:id", async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 });
+
+router.put("/update/profile/:id", async (req, res) => {
+  const partnerId = req.params.id;
+  const updateData = req.body;
+
+  try {
+    const partner = await Partner.findById(req.params.id);
+
+    if (!partner) {
+      return res.status(404).send({ message: "Partner not found" });
+    }
+
+    const updatedPartner = await Partner.findByIdAndUpdate(
+      partnerId,
+      { $set: updateData },
+      { new: true, runValidators: true } // Returns updated document & runs schema validation
+    );
+
+    return res.status(200).json({
+      message: "Profile updated successfully!",
+      data: updatedPartner,
+    });
+  } catch (err) {
+    console.error("Error updating partner profile:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error, unable to update profile" });
+  }
+});
 module.exports = router;
