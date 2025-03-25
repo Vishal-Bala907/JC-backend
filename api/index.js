@@ -96,9 +96,9 @@ const PORT = process.env.PORT || 5000;
 const IO_SERVER = http.createServer(app);
 const IO = new Server(IO_SERVER, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:2703"], //add your origin here instead of this http://localhost:3000
+    origin: "*", //add your origin here instead of this http://localhost:3000
     methods: ["PUT", "GET", "POST", "DELETE", "PATCH", "OPTIONS"],
-    credentials: true,
+    // credentials: true,
   },
 });
 
@@ -106,10 +106,18 @@ IO.on("connection", (socket) => {
   // console.log("user connected");
 
   socket.on("order-placed", (order) => {
+    if (!order?.user_info) {
+      console.warn("Invalid order data received:", order);
+      return;
+    }
+
+    const { name = "A Customer", zipCode = "Unknown" } = order.user_info;
+    const username = name.trim() || "A Customer";
+
     const orderObject = {
-      user: order.user_info.name,
+      user: username,
       message: "Order Placed",
-      pincode: order.user_info.zipCode,
+      pincode: String(zipCode),
     };
     // console.log(orderObject);
     IO.emit("order-received", orderObject);
