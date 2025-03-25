@@ -25,8 +25,8 @@ const productSchema = new mongoose.Schema(
     commission: {
       type: Number,
       required: true,
-      
     },
+
     slug: {
       type: String,
       required: true,
@@ -70,6 +70,10 @@ const productSchema = new mongoose.Schema(
       discount: {
         type: Number,
         required: false,
+      },
+      gst: {
+        type: Number,
+        required: true,
       },
     },
     variants: [{}],
