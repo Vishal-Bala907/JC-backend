@@ -611,7 +611,9 @@ const addShippingAddress = async (req, res) => {
   try {
     const customerId = req.params.id;
     const newShippingAddress = req.body;
-
+    console.log(newShippingAddress);
+    delete newShippingAddress.phone;
+    console.log(newShippingAddress);
     // Find the customer by ID and update the shippingAddress field
     const result = await Customer.updateOne(
       { _id: customerId },
@@ -631,6 +633,8 @@ const addShippingAddress = async (req, res) => {
       return res.status(404).send({ message: "Customer not found." });
     }
   } catch (err) {
+    console.log(err);
+
     res.status(500).send({
       message: err.message,
     });
