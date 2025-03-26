@@ -79,7 +79,9 @@ router.get("/orders/zip-5/:zipCode", async (req, res) => {
   const { zipCode } = req.params;
 
   try {
-    const orders = await Order.find({ "user_info.zipCode": zipCode }).limit(5); // Limit the result to 5 orders
+    const orders = await Order.find({ "user_info.zipCode": zipCode })
+      .limit(5)
+      .sort({ createdAt: -1 }); // Limit the result to 5 orders
 
     if (orders.length === 0) {
       return res
