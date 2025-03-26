@@ -13,6 +13,7 @@ const { formatAmountForStripe } = require("../lib/stripe/stripe");
 const { handleCreateInvoice } = require("../lib/email-sender/create");
 const { handleProductQuantity } = require("../lib/stock-controller/others");
 const customerInvoiceEmailBody = require("../lib/email-sender/templates/order-to-customer");
+const StoreNotification = require("../models/StoreNotification");
 
 const addOrder = async (req, res) => {
   // console.log("addOrder", req.body);
@@ -22,8 +23,20 @@ const addOrder = async (req, res) => {
       user: req.user._id,
     });
 
-    console.dir(newOrder);
+    // console.dir(newOrder);
     const order = await newOrder.save();
+    // create new notification
+    const newNotification = new StoreNotification({
+      zipCode: order.user_info.zipCode,
+      message: `New order placed by ${order.user_info.name}!`,
+      status: "unread",
+    });
+    try {
+      await newNotification.save();
+    } catch (err) {
+      console.log(err);
+    }
+
     res.status(201).send(order);
     handleProductQuantity(order.cart);
   } catch (err) {

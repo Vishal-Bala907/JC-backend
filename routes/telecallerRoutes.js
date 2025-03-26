@@ -4,6 +4,7 @@ const Telecaller = require("../models/Telecaller");
 const Customer = require("../models/Customer");
 const Order = require("../models/Order");
 const Partner = require("../models/Partner");
+const StoreNotification = require("../models/StoreNotification");
 
 // Create a new Telecaller (POST)
 router.post("/telecaller/add", async (req, res) => {
@@ -94,6 +95,16 @@ router.post("/telecaller/addorder/:id", async (req, res) => {
     telecaller.totalIncome += commission;
     telecaller.remainingbalance += commission;
     const UpdatedTelecaller = await telecaller.save();
+    const newNotification = new StoreNotification({
+      zipCode: order.user_info.zipCode,
+      message: `New order placed by ${order.user_info.name}!`,
+      status: "unread",
+    });
+    try {
+      await newNotification.save();
+    } catch (err) {
+      console.log(err);
+    }
     res.status(201).json({
       message: "Order added successfully",
       orderData: order1,
@@ -190,13 +201,11 @@ router.get("/get/pincodes", async (req, res) => {
 
     return res.status(200).json({ success: true, message: pincodes });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        error: "Internal Server Error",
-        details: error.message,
-      });
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+      details: error.message,
+    });
   }
 });
 
