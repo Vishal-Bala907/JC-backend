@@ -92,8 +92,9 @@ router.post("/telecaller/addorder/:id", async (req, res) => {
 
     telecaller.orders.push(order1._id);
     telecaller.commission += commission;
-    telecaller.totalIncome += commission;
-    telecaller.remainingbalance += commission;
+    telecaller.remainingBalance += commission;
+    // console.log(commission);
+
     const UpdatedTelecaller = await telecaller.save();
     const newNotification = new StoreNotification({
       zipCode: order.user_info.zipCode,

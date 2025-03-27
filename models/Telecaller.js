@@ -82,12 +82,6 @@ const telecallerSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    totalIncome: {
-      type: Number,
-      default: 0,
-      required: true,
-      min: 0,
-    },
     remainingBalance: {
       type: Number,
       default: 0,

@@ -9,6 +9,7 @@ const {
   updateOrderDeleveryStatus,
   updateOrderCompletionStatus,
   deleteRider,
+  getMyDeleveries,
 } = require("../controller/bikeRiderController");
 const router = express.Router();
 
@@ -34,5 +35,6 @@ router.put("/order-deliverd/:orderId/:riderId", updateOrderCompletionStatus);
 
 router.get("/pending-deliveries/:riderId", pendingDeliveries);
 router.delete("/delete/:riderId", deleteRider);
+router.get("/my-deliveries/:id", getMyDeleveries);
 
 module.exports = router;

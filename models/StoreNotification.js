@@ -15,6 +15,11 @@ const storeNotificationSchema = new mongoose.Schema(
       enum: ["read", "unread"],
       default: "unread",
     },
+    orderStatus: {
+      type: String,
+      enum: ["placed", "shipped", "delivered", "cancelled"],
+      default: "placed",
+    },
   },
   { timestamps: true }
 );

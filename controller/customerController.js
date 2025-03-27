@@ -214,14 +214,14 @@ const loginTelecaller = async (req, res) => {
 
     // Check password
     const CUSTOMER = await Customer.findOne({ email: req.body.email });
-    console.log(CUSTOMER);
+    // console.log(CUSTOMER);
 
     if (
       CUSTOMER.password &&
       bcrypt.compareSync(req.body.password, CUSTOMER.password)
     ) {
       const token = signInToken(telecaller);
-
+      // delete telecaller.orders;
       return res.status(200).json({
         token,
         _id: telecaller._id,
@@ -230,6 +230,7 @@ const loginTelecaller = async (req, res) => {
         address: telecaller.address,
         phone: telecaller.mobile,
         image: telecaller.image,
+        telecaller: telecaller,
         success: true,
       });
     } else {

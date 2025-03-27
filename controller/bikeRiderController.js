@@ -349,3 +349,47 @@ exports.deleteRider = async (req, res) => {
     res.status(500).json({ message: "Server error, unable to delete rider" });
   }
 };
+
+exports.getMyDeleveries = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+
+  try {
+    // Fetch deliveries and correctly populate `orderId`
+    // Fetch deliveries
+    const deliveries = await Delivery.find({ bikeRiderId: id });
+
+    if (!deliveries.length) {
+      return res
+        .status(404)
+        .json({ status: false, message: "No deliveries found" });
+    }
+
+    // Extract all orderIds
+    const orderIds = deliveries.map((delivery) => delivery.orderId);
+    // console.log(orderIds);
+
+    // Fetch corresponding orders manually
+    const orders = await Order.find({ invoice: { $in: orderIds } });
+    // console.log(orders);
+
+    // Attach order data to deliveries
+    // const deliveriesWithOrders = deliveries.map((delivery) => ({
+    //   ...delivery._doc,
+    //   order:
+    //     orders.find(
+    //       (order) => order._id.toString() === delivery.orderId.toString()
+    //     ) || null,
+    // }));
+
+    res.status(200).json({ status: true, data: orders });
+
+    // res.status(200).json({ status: true, data: deliveries }); // Send the deliveries as the response
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: false,
+      message: "Server error, unable to fetch deliveries",
+    });
+  }
+};
