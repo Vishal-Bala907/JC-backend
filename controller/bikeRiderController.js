@@ -2,6 +2,7 @@ const BikeRider = require("../models/BikeRider");
 const Delivery = require("../models/Delivery");
 const Order = require("../models/Order");
 const Partner = require("../models/Partner");
+const StoreNotification = require("../models/StoreNotification");
 
 exports.addBikeRider = async (req, res) => {
   const {
@@ -123,6 +124,13 @@ exports.updateOrderDeleveryStatus = async (req, res) => {
       order.status = "Delivered";
       await order.save(); // ✅ Await to ensure it's saved
 
+      const notification = new StoreNotification({
+        zipCode: order.user_info.zipCode,
+        message: `Order ${order.invoice} delevered successfully by the rider ${order.riderName} id: ${delivery.bikeRiderId}`,
+        orderStatus: "delivered",
+      });
+      await notification.save();
+
       return res.status(200).json({ message: "Order Delivered Successfully" });
     } else if (status === "false") {
       // Order canceled
@@ -134,6 +142,13 @@ exports.updateOrderDeleveryStatus = async (req, res) => {
 
       order.status = "Cancelled";
       await order.save(); // ✅ Await to ensure it's saved
+
+      const notification = new StoreNotification({
+        zipCode: order.user_info.zipCode,
+        message: `The Order ${order.invoice} was cancelled. Rider name ${order.riderName} id: ${delivery.bikeRiderId}`,
+        orderStatus: "cancelled",
+      });
+      await notification.save();
 
       return res.status(200).json({ message: "Order Canceled Successfully" });
     } else {

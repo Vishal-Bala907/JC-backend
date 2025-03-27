@@ -17,7 +17,7 @@ const storeNotificationSchema = new mongoose.Schema(
     },
     orderStatus: {
       type: String,
-      enum: ["placed", "shipped", "delivered", "cancelled"],
+      enum: ["placed", "delivered", "cancelled"],
       default: "placed",
     },
   },
