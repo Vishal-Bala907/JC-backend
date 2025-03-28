@@ -378,4 +378,59 @@ router.put("/update/profile/:id", async (req, res) => {
       .json({ message: "Server error, unable to update profile" });
   }
 });
+
+router.get("/partner/orders/:id", async (req, res) => {
+  const id = req.params.id;
+  const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = parseInt(req.query.limit) || 5; // Default to 5 records per page
+
+  try {
+    // Fetch delivery details with pagination
+    const deleveryWithStore = await Delivery.find({ storeId: id })
+      .populate("riderId")
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalOrders = await Delivery.countDocuments({ storeId: id });
+
+    if (deleveryWithStore.length === 0) {
+      return res.status(404).json({ message: "No deliveries found" });
+    }
+
+    // Extract invoices from deliveries
+    const invoices = deleveryWithStore.map((delivery) => delivery.orderId);
+
+    const constrain = ["Delivered", "Cancelled"];
+
+    // Find orders matching invoices & status constraint
+    const orders = await Order.find({
+      invoice: { $in: invoices },
+      status: { $in: constrain },
+    });
+
+    if (orders.length === 0) {
+      return res.status(404).json({
+        message: "No matching orders found",
+      });
+    }
+
+    // Map orders with their deliveries
+    const responseData = orders.map((order) => {
+      const relatedDeliveries = deleveryWithStore.filter(
+        (delivery) => delivery.orderId === order.invoice // Ensure ObjectId comparison
+      );
+      return { order, deliveries: relatedDeliveries };
+    });
+
+    res.json({
+      totalOrders,
+      currentPage: page,
+      totalPages: Math.ceil(totalOrders / limit),
+      orders: responseData,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 module.exports = router;
