@@ -186,6 +186,26 @@ exports.getRiderByNameOrNumber = async (req, res) => {
   }
 };
 
+exports.getBikeRiderById = async (req, res) => {
+  const { id } = req.params; // Destructure for cleaner code
+
+  try {
+    if (!id) {
+      return res.status(400).json({ message: "ID is required" });
+    }
+
+    const rider = await BikeRider.findById(id);
+    if (!rider) {
+      return res.status(404).json({ message: "Rider not found" });
+    }
+
+    res.status(200).json(rider);
+  } catch (err) {
+    console.error("Error fetching bike rider:", err);
+    res.status(500).json({ message: "Something went wrong!" });
+  }
+};
+
 exports.assignBikeRider = async (req, res) => {
   const { orderId, riderId, shopId } = req.params;
   // Check if the order is already assigned to another rider

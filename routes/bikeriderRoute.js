@@ -10,6 +10,7 @@ const {
   updateOrderCompletionStatus,
   deleteRider,
   getMyDeleveries,
+  getBikeRiderById,
 } = require("../controller/bikeRiderController");
 const router = express.Router();
 
@@ -26,6 +27,7 @@ router.get("/get-all-riders", getAllBikeRiders);
 
 //forget-password
 router.get("/get-rider/:identifier", getRiderByNameOrNumber);
+router.get("/get-rider/by-id/:id", getBikeRiderById);
 
 //reset-password
 router.get("/assign-rider/:orderId/:riderId/:shopId", assignBikeRider);
