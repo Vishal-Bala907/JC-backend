@@ -13,6 +13,7 @@ const {
 const { sendVerificationCode } = require("../lib/phone-verification/sender");
 const Telecaller = require("../models/Telecaller");
 const Partner = require("../models/Partner");
+const TelecallerAndCustomer = require("../models/TelecallerAndCustomer");
 
 const verifyEmailAddress = async (req, res) => {
   const phone = req.body.phone;
@@ -180,6 +181,18 @@ const addCustomerViaTelecaller = async (req, res) => {
     // Save the customer to the database
     // console.dir(newCustomer);
     await newCustomer.save();
+
+    //save the relationship
+    const relationship = await TelecallerAndCustomer.findOne({
+      userMobileNumber: phone,
+    });
+
+    if (!relationship) {
+      const telecallerAndUser = await TelecallerAndCustomer.create({
+        telecallerId: req.params.id,
+        userMobileNumber: phone,
+      });
+    }
 
     res.status(201).json({
       message: "Customer created successfully",

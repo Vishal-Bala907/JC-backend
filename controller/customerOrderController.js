@@ -14,6 +14,8 @@ const { handleCreateInvoice } = require("../lib/email-sender/create");
 const { handleProductQuantity } = require("../lib/stock-controller/others");
 const customerInvoiceEmailBody = require("../lib/email-sender/templates/order-to-customer");
 const StoreNotification = require("../models/StoreNotification");
+const TelecallerAndCustomer = require("../models/TelecallerAndCustomer");
+const Telecaller = require("../models/Telecaller");
 
 const addOrder = async (req, res) => {
   // console.log("addOrder", req.body);
@@ -26,6 +28,32 @@ const addOrder = async (req, res) => {
     // console.dir(newOrder);
     const order = await newOrder.save();
     // create new notification
+    const contact = req.body.user_info.contact;
+
+    const relationship = await TelecallerAndCustomer.findOne({
+      userMobileNumber: contact,
+    });
+
+    if (relationship) {
+      const telecaller = await Telecaller.findById(relationship.telecallerId);
+      if (telecaller) {
+        const CART = order.cart;
+        let totalComission = 0;
+        for (const item of CART) {
+          let commission = 0;
+          let price = 0;
+          commission = item.commission || 0;
+          price = item.prices.price || 0;
+          totalComission += (commission * price) / 100;
+        }
+
+        // telecaller.orders.push(order._id);
+        telecaller.commission += totalComission;
+        telecaller.remainingBalance += totalComission;
+        await telecaller.save();
+      }
+    }
+    // handle the commission
     const newNotification = new StoreNotification({
       zipCode: order.user_info.zipCode,
       message: `New order placed by ${order.user_info.name}!`,

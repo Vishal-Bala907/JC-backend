@@ -50,7 +50,7 @@ router.delete("/shipping/address/:userId/:shippingId", deleteShippingAddress);
 
 //register a user
 router.post("/register/:token", registerCustomer);
-router.post("/tele/add-customer", addCustomerViaTelecaller);
+router.post("/tele/add-customer/:id", addCustomerViaTelecaller);
 
 //login a user
 router.post("/login", loginCustomer);
