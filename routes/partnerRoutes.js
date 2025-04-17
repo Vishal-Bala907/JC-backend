@@ -389,7 +389,8 @@ router.get("/partner/orders/:id", async (req, res) => {
     const deleveryWithStore = await Delivery.find({ storeId: id })
       .populate("riderId")
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
     const totalOrders = await Delivery.countDocuments({ storeId: id });
 
