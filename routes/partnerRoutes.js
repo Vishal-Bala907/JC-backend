@@ -3,6 +3,7 @@ const router = express.Router();
 const Partner = require("../models/Partner");
 const Order = require("../models/Order");
 const Delivery = require("../models/Delivery");
+const BikeRider = require("../models/BikeRider");
 
 // Create a new Store Owner (POST)
 router.post("/partner/add", async (req, res) => {
@@ -407,7 +408,7 @@ router.get("/partner/orders/:id", async (req, res) => {
     const orders = await Order.find({
       invoice: { $in: invoices },
       status: { $in: constrain },
-    });
+    }).sort({ createdAt: -1 });
 
     if (orders.length === 0) {
       return res.status(404).json({
@@ -434,4 +435,46 @@ router.get("/partner/orders/:id", async (req, res) => {
   }
 });
 
+router.get("/partner/verify/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const orders = await Partner.findById(id);
+    if (!orders) {
+      return res.status(404).json({ message: "Partner not found" });
+    }
+
+    const status = orders.status;
+    if (status === "Accepted") {
+      return res.status(200).json({ message: "Partner is already verified" });
+    } else {
+      return res.status(401).json({ message: "Partner is not verified" });
+    }
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put(`/partner/reset-rider-pass/:id`, async (req, res) => {
+  const { aadhar, newPassword } = req.body;
+  try {
+    const rider = await BikeRider.findById(req.params.id);
+    if (!rider) {
+      return res.status(404).json({ message: "Rider not found" });
+    }
+
+    if (rider.aadharNumber !== aadhar) {
+      return res.status(400).json({ message: "Invalid Aadhar Number" });
+    }
+
+    rider.password = newPassword;
+    await rider.save();
+    return res
+      .status(200)
+      .json({ message: "Password reset successfully", data: rider });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({ error: error.message });
+  }
+});
 module.exports = router;
