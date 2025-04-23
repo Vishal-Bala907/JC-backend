@@ -69,7 +69,7 @@ router.post("/telecaller/add", async (req, res) => {
 });
 
 // Get Telecaller by ID (GET)
-router.get("/telecaller/:id", async (req, res) => {
+router.get("/telecaller/get-by-id/:id", async (req, res) => {
   try {
     const telecaller = await Telecaller.findById(req.params.id);
     if (!telecaller) {

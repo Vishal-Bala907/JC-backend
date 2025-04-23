@@ -279,6 +279,8 @@ const loginStorePartner = async (req, res) => {
       });
     }
 
+    console.log(partner);
+
     if (partner.status !== "Accepted") {
       return res.status(403).json({
         message: "Access denied!",
