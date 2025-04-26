@@ -26,8 +26,13 @@ const addOrder = async (req, res) => {
     });
 
     // console.dir(newOrder);
+    newOrder.orderedBy.role = "customer";
+    newOrder.orderedBy.name = newOrder?.user_info?.name ?? "N/A";
+    newOrder.orderedBy.email = newOrder?.user_info?.email ?? "N/A";
+    newOrder.orderedBy.contact = newOrder?.user_info?.contact ?? "N/A";
     const order = await newOrder.save();
     // create new notification
+
     const contact = req.body.user_info.contact;
 
     const relationship = await TelecallerAndCustomer.findOne({
@@ -68,6 +73,8 @@ const addOrder = async (req, res) => {
     res.status(201).send(order);
     handleProductQuantity(order.cart);
   } catch (err) {
+    console.log(err);
+
     res.status(500).send({
       message: err.message,
     });

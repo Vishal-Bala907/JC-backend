@@ -8,6 +8,26 @@ const orderSchema = new mongoose.Schema(
       ref: "Customer",
       required: true,
     },
+    orderedBy: {
+      role: {
+        type: String,
+        required: true,
+        enum: ["customer", "telecaller"],
+        default: "customer",
+      },
+      name: {
+        type: String,
+        required: false,
+      },
+      email: {
+        type: String,
+        required: false,
+      },
+      contact: {
+        type: String,
+        required: false,
+      },
+    },
     invoice: {
       type: Number,
       required: false,
@@ -42,10 +62,10 @@ const orderSchema = new mongoose.Schema(
         type: String,
         required: false,
       },
-      location:{
+      location: {
         type: String,
-        required: false
-      }
+        required: false,
+      },
     },
     subTotal: {
       type: Number,
