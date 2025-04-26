@@ -87,12 +87,12 @@ router.post("/telecaller/addorder/:id", async (req, res) => {
       return res.status(404).json({ message: "Telecaller not found" });
     }
     const { order, commission } = req.body;
-    order.orderedBy.role = "telecaller";
-    order.orderedBy.name = telecaller?.name ?? "N/A";
-    order.orderedBy.email = telecaller?.email ?? "N/A";
-    order.orderedBy.contact = telecaller?.mobile ?? "N/A";
 
     const newOrder = new Order(order);
+    newOrder.orderedBy.role = "telecaller";
+    newOrder.orderedBy.name = telecaller?.name ?? "N/A";
+    newOrder.orderedBy.email = telecaller?.email ?? "N/A";
+    newOrder.orderedBy.contact = telecaller?.mobile ?? "N/A";
     const order1 = await newOrder.save();
 
     telecaller.orders.push(order1._id);
