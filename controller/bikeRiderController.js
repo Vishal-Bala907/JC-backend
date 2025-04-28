@@ -148,14 +148,14 @@ exports.updateOrderDeleveryStatus = async (req, res) => {
     }
 
     // OPTIONAL (recommended): if delivery has an orderId stored, cross-verify:
-    if (
-      delivery.orderId &&
-      delivery.orderId.toString() !== order._id.toString()
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Delivery and Order do not match" });
-    }
+    // if (
+    //   delivery.orderId &&
+    //   delivery.orderId.toString() !== order._id.toString()
+    // ) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: "Delivery and Order do not match" });
+    // }
 
     const isDelivered = status === "true";
 
