@@ -129,6 +129,7 @@ exports.loginBikeRider = async (req, res) => {
 
 exports.updateOrderDeleveryStatus = async (req, res) => {
   const { orderId, deliveryId, status } = req.params;
+  console.log("updating ", orderId, deliveryId, status);
 
   try {
     // First validate status
