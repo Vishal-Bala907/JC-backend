@@ -215,4 +215,47 @@ router.get("/get/pincodes", async (req, res) => {
   }
 });
 
+router.get("/telecaller-orders/:id", async (req, res) => {
+  try {
+    const { page, limit } = req.query; // Default: page 1, 10 items per page
+
+    const telecaller = await Telecaller.findById(req.params.id).populate({
+      path: "orders",
+      options: {
+        sort: { createdAt: -1 },
+        skip: (page - 1) * limit,
+        limit: parseInt(limit),
+      },
+    });
+
+    if (!telecaller) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Telecaller not found" });
+    }
+
+    const totalOrders = await Order.countDocuments({
+      _id: { $in: telecaller.orders },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Telecaller fetched successfully",
+      data: telecaller,
+      pagination: {
+        totalOrders,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalOrders / limit),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+      details: error.message,
+    });
+  }
+});
+
 module.exports = router;
