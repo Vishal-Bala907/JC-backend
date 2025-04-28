@@ -129,76 +129,95 @@ exports.loginBikeRider = async (req, res) => {
 
 exports.updateOrderDeleveryStatus = async (req, res) => {
   const { orderId, deliveryId, status } = req.params;
-  console.log("updating ", orderId, deliveryId, status);
+  console.log("Updating delivery status:", { orderId, deliveryId, status });
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    // First validate status
-    if (status !== "true" && status !== "false") {
+    // Validate status
+    if (!["true", "false"].includes(status)) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ message: "Invalid status value" });
     }
 
-    const delivery = await Delivery.findById(deliveryId);
+    const delivery = await Delivery.findById(deliveryId).session(session);
     if (!delivery) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: "Delivery not found" });
     }
 
-    // Important: check if the delivery is linked to the order correctly
-    const order = await Order.findOne({ invoice: orderId });
+    const order = await Order.findOne({ invoice: orderId }).session(session);
     if (!order) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // OPTIONAL (recommended): if delivery has an orderId stored, cross-verify:
-    // if (
-    //   delivery.orderId &&
-    //   delivery.orderId.toString() !== order._id.toString()
-    // ) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: "Delivery and Order do not match" });
-    // }
-
     const isDelivered = status === "true";
 
+    // Extra safety check: Don't allow cancelling already delivered order
+    if (delivery.status === true && !isDelivered) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ message: "Cannot cancel a delivered order" });
+    }
+
+    // Extra safety check: Don't deliver already delivered order
+    if (delivery.status === true && isDelivered) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Order already delivered" });
+    }
+
     if (isDelivered) {
-      // Deliver the order
+      // Mark as Delivered
       delivery.status = true;
       delivery.orderCompletionTime = new Date();
       delivery.amount = order.total;
-
       order.status = "Delivered";
-
-      await Promise.all([delivery.save(), order.save()]);
-
-      const notification = new StoreNotification({
-        zipCode: order.user_info.zipCode,
-        message: `Order ${order.invoice} delivered successfully by rider ${order.riderName} (id: ${delivery.bikeRiderId})`,
-        orderStatus: "delivered",
-      });
-      await notification.save();
-
-      return res.status(200).json({ message: "Order Delivered Successfully" });
     } else {
-      // Cancel the order
+      // Mark as Cancelled
       delivery.status = false;
-      delivery.orderCompletionTime = new Date(); // ❗ null not 0
+      delivery.orderCompletionTime = null;
       delivery.amount = 0;
-
       order.status = "Cancelled";
-
-      await Promise.all([delivery.save(), order.save()]);
-
-      const notification = new StoreNotification({
-        zipCode: order.user_info.zipCode,
-        message: `Order ${order.invoice} was cancelled. Rider: ${order.riderName} (id: ${delivery.bikeRiderId})`,
-        orderStatus: "cancelled",
-      });
-      await notification.save();
-
-      return res.status(200).json({ message: "Order Cancelled Successfully" });
     }
+
+    // Create the notification message
+    const notificationMessage = isDelivered
+      ? `Order ${order.invoice} delivered successfully by rider ${order.riderName} (id: ${delivery.bikeRiderId})`
+      : `Order ${order.invoice} was cancelled. Rider: ${order.riderName} (id: ${delivery.bikeRiderId})`;
+
+    const notification = new StoreNotification({
+      zipCode: order.user_info.zipCode,
+      message: notificationMessage,
+      orderStatus: isDelivered ? "delivered" : "cancelled",
+    });
+
+    // Save everything atomically
+    await Promise.all([
+      delivery.save({ session }),
+      order.save({ session }),
+      notification.save({ session }),
+    ]);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      message: isDelivered
+        ? "Order Delivered Successfully"
+        : "Order Cancelled Successfully",
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Error updating delivery status:", err);
+    await session.abortTransaction();
+    session.endSession();
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });
