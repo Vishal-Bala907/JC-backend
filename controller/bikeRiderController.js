@@ -20,12 +20,38 @@ exports.addBikeRider = async (req, res) => {
   const { partnerId } = req.params;
 
   try {
-    // Check if the bike rider already exists
-    const existingRider = await BikeRider.findOne({ username });
-    if (existingRider) {
-      return res.status(400).json({ message: "Username already exists" });
-    }
+    const duplicateCheck = await BikeRider.findOne({
+      $or: [
+        { username },
+        { email },
+        { phoneNumber },
+        { aadharNumber },
+        { panNumber },
+        { bikeLicenceNumber },
+      ],
+    });
 
+    if (duplicateCheck) {
+      let conflictField = "";
+
+      if (duplicateCheck.username === username) {
+        conflictField = "Username";
+      } else if (duplicateCheck.email === email) {
+        conflictField = "Email";
+      } else if (duplicateCheck.phoneNumber === phoneNumber) {
+        conflictField = "Phone number";
+      } else if (duplicateCheck.aadharNumber === aadharNumber) {
+        conflictField = "Aadhar number";
+      } else if (duplicateCheck.panNumber === panNumber) {
+        conflictField = "PAN number";
+      } else if (duplicateCheck.bikeLicenceNumber === bikeLicenceNumber) {
+        conflictField = "Bike Licence number";
+      }
+
+      return res
+        .status(400)
+        .json({ message: `${conflictField} already exists` });
+    }
     // Check if the partner (store) exists
     const partner = await Partner.findById(partnerId);
     if (!partner) {
@@ -103,62 +129,78 @@ exports.loginBikeRider = async (req, res) => {
 
 exports.updateOrderDeleveryStatus = async (req, res) => {
   const { orderId, deliveryId, status } = req.params;
-  console.log({ orderId, deliveryId, status });
 
   try {
-    const delivery = await Delivery.findById(deliveryId);
-    const order = await Order.findOne({ invoice: orderId });
-
-    if (!delivery || !order) {
-      return res.status(404).json({ message: "Delivery or Order not found" });
+    // First validate status
+    if (status !== "true" && status !== "false") {
+      return res.status(400).json({ message: "Invalid status value" });
     }
 
-    if (status === "true") {
-      // Order delivered
-      delivery.status = status;
+    const delivery = await Delivery.findById(deliveryId);
+    if (!delivery) {
+      return res.status(404).json({ message: "Delivery not found" });
+    }
+
+    // Important: check if the delivery is linked to the order correctly
+    const order = await Order.findOne({ invoice: orderId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // OPTIONAL (recommended): if delivery has an orderId stored, cross-verify:
+    if (
+      delivery.orderId &&
+      delivery.orderId.toString() !== order._id.toString()
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Delivery and Order do not match" });
+    }
+
+    const isDelivered = status === "true";
+
+    if (isDelivered) {
+      // Deliver the order
+      delivery.status = true;
       delivery.orderCompletionTime = new Date();
       delivery.amount = order.total;
 
-      await delivery.save(); // ✅ Await to ensure it's saved
-
       order.status = "Delivered";
-      await order.save(); // ✅ Await to ensure it's saved
+
+      await Promise.all([delivery.save(), order.save()]);
 
       const notification = new StoreNotification({
         zipCode: order.user_info.zipCode,
-        message: `Order ${order.invoice} delevered successfully by the rider ${order.riderName} id: ${delivery.bikeRiderId}`,
+        message: `Order ${order.invoice} delivered successfully by rider ${order.riderName} (id: ${delivery.bikeRiderId})`,
         orderStatus: "delivered",
       });
       await notification.save();
 
       return res.status(200).json({ message: "Order Delivered Successfully" });
-    } else if (status === "false") {
-      // Order canceled
-      delivery.status = status;
-      delivery.orderCompletionTime = 0;
+    } else {
+      // Cancel the order
+      delivery.status = false;
+      delivery.orderCompletionTime = new Date(); // ❗ null not 0
       delivery.amount = 0;
 
-      await delivery.save(); // ✅ Await to ensure it's saved
-
       order.status = "Cancelled";
-      await order.save(); // ✅ Await to ensure it's saved
+
+      await Promise.all([delivery.save(), order.save()]);
 
       const notification = new StoreNotification({
         zipCode: order.user_info.zipCode,
-        message: `The Order ${order.invoice} was cancelled. Rider name ${order.riderName} id: ${delivery.bikeRiderId}`,
+        message: `Order ${order.invoice} was cancelled. Rider: ${order.riderName} (id: ${delivery.bikeRiderId})`,
         orderStatus: "cancelled",
       });
       await notification.save();
 
-      return res.status(200).json({ message: "Order Canceled Successfully" });
-    } else {
-      return res.status(400).json({ message: "Invalid status value" });
+      return res.status(200).json({ message: "Order Cancelled Successfully" });
     }
   } catch (err) {
     console.error(err);
     return res
       .status(500)
-      .json({ message: "Server error, unable to handle order" });
+      .json({ message: "Server error", error: err.message });
   }
 };
 
