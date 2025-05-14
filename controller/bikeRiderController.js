@@ -372,6 +372,8 @@ exports.pendingDeliveries = async (req, res) => {
       return res.status(404).json({ message: "No pending deliveries found" });
     }
 
+    // console.log(pendingDeliveries);
+
     const data = await Promise.all(
       pendingDeliveries.map(async (pending) => {
         const order = await Order.findOne({
@@ -387,6 +389,7 @@ exports.pendingDeliveries = async (req, res) => {
         };
       })
     );
+    console.log(data, data.length);
 
     // Filter out null values (i.e., deliveries where order.status !== "Processing")
     const filteredData = data.filter((item) => item !== null);
@@ -432,41 +435,44 @@ exports.deleteRider = async (req, res) => {
 
 exports.getMyDeleveries = async (req, res) => {
   const { id } = req.params;
-  console.log(id);
+  console.log("BikeRider ID:", id);
 
   try {
-    // Fetch deliveries and correctly populate `orderId`
-    // Fetch deliveries
+    // Step 1: Fetch all deliveries for the given rider ID
     const deliveries = await Delivery.find({ bikeRiderId: id });
 
     if (!deliveries.length) {
-      return res
-        .status(404)
-        .json({ status: false, message: "No deliveries found" });
+      return res.status(404).json({
+        status: false,
+        message: "No deliveries found",
+      });
     }
 
-    // Extract all orderIds
+    // Step 2: Extract all orderIds from deliveries
     const orderIds = deliveries.map((delivery) => delivery.orderId);
-    // console.log(orderIds);
 
-    // Fetch corresponding orders manually
+    // Step 3: Fetch all matching orders where invoice matches orderId
     const orders = await Order.find({ invoice: { $in: orderIds } });
-    // console.log(orders);
 
-    // Attach order data to deliveries
-    // const deliveriesWithOrders = deliveries.map((delivery) => ({
-    //   ...delivery._doc,
-    //   order:
-    //     orders.find(
-    //       (order) => order._id.toString() === delivery.orderId.toString()
-    //     ) || null,
-    // }));
+    // Step 4: Create a quick lookup map for orders
+    const orderMap = {};
+    orders.forEach((order) => {
+      orderMap[order.invoice] = order;
+    });
 
-    res.status(200).json({ status: true, data: orders });
+    // Step 5: Map each delivery with its corresponding order using the lookup map
+    const result = deliveries.map((delivery) => ({
+      deliveryId: delivery._id,
+      order: orderMap[delivery.orderId] || null,
+    }));
 
-    // res.status(200).json({ status: true, data: deliveries }); // Send the deliveries as the response
+    // Step 6: Send the combined result
+    res.status(200).json({
+      status: true,
+      data: result,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error in getMyDeliveries:", error);
     res.status(500).json({
       status: false,
       message: "Server error, unable to fetch deliveries",

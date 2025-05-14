@@ -4,6 +4,8 @@ const Partner = require("../models/Partner");
 const Order = require("../models/Order");
 const Delivery = require("../models/Delivery");
 const BikeRider = require("../models/BikeRider");
+const Pincodes = require("../models/Pincodes");
+const { mongoose } = require("../config/db");
 
 // Create a new Store Owner (POST)
 router.post("/partner/add", async (req, res) => {
@@ -438,18 +440,36 @@ router.get("/partner/orders/:id", async (req, res) => {
 router.get("/partner/verify/:id", async (req, res) => {
   const id = req.params.id;
   try {
-    const orders = await Partner.findById(id);
-    if (!orders) {
+    const partner = await Partner.findById(id);
+    if (!partner) {
       return res.status(404).json({ message: "Partner not found" });
     }
 
-    const status = orders.status;
-    if (status === "Accepted") {
-      return res.status(200).json({ message: "Partner is already verified" });
-    } else {
-      return res.status(401).json({ message: "Partner is not verified" });
+    if (partner.status === "Accepted") {
+      return res
+        .status(200)
+        .json({ partner: partner, message: "Partner is already verified" });
     }
+
+    // Check if primary pincode exists
+    const pincode = partner.pinCode;
+    const pincodeData = await Pincodes.findOne({ pincode });
+
+    if (pincodeData) {
+      if (pincodeData.flag === false) {
+        return res.status(400).json({
+          message: "Pincode already exists and used as a secondary pincode",
+        });
+      }
+    } else {
+      // Add as primary pincode
+      const newPincode = new Pincodes({ pincode, flag: true });
+      await newPincode.save();
+    }
+
+    return res.status(401).json({ message: "Partner is not verified" });
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -477,4 +497,61 @@ router.put(`/partner/reset-rider-pass/:id`, async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
+router.put("/add-aditional-pincode/:partnerId/:pincode", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { partnerId, pincode } = req.params;
+
+    const isPartner = await Partner.findById(partnerId).session(session);
+    if (!isPartner) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Partner not found" });
+    }
+
+    if (isPartner.status !== "Accepted") {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(401).json({ message: "Partner is not verified" });
+    }
+
+    const pincodeData = await Pincodes.findOne({ pincode }).session(session);
+    if (pincodeData) {
+      await session.abortTransaction();
+      session.endSession();
+      if (pincodeData.flag === true) {
+        return res.status(400).json({
+          message: "Pincode already exists and used as a primary pincode",
+        });
+      } else {
+        return res.status(400).json({
+          message: "Pincode already exists and used as a secondary pincode",
+        });
+      }
+    }
+
+    const newPincode = new Pincodes({ pincode, flag: false });
+    await newPincode.save({ session });
+
+    isPartner.additionalPincode.push(pincode);
+    await isPartner.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.json({
+      message: "Pincode added successfully",
+      data: isPartner,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 module.exports = router;

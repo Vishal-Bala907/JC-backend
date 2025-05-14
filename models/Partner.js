@@ -35,6 +35,13 @@ const partnerSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    additionalPincode: [
+      {
+        type: String,
+        trim: true,
+        default: [],
+      },
+    ],
     address: {
       type: String,
       required: true,
