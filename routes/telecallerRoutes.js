@@ -6,6 +6,7 @@ const Order = require("../models/Order");
 const Partner = require("../models/Partner");
 const StoreNotification = require("../models/StoreNotification");
 const Pincodes = require("../models/Pincodes");
+const TelecallerAndCustomer = require("../models/TelecallerAndCustomer");
 
 // Create a new Telecaller (POST)
 router.post("/telecaller/add", async (req, res) => {
@@ -177,25 +178,58 @@ router.delete("/telecaller/:id", async (req, res) => {
 });
 // Delete Telecaller (DELETE)
 // Get Telecaller Details (GET)
-router.get("/get-customer/:number", async (req, res) => {
-  const { number } = req.params;
-  console.log("hello " + number);
-
+router.get("/get-customer/:number/:telecallerId", async (req, res) => {
+  const { number, telecallerId } = req.params;
+  console.log({ number, telecallerId });
   try {
+    // check if the customer is associated with the telecaller
+    const isCustomerAlreadyAdded = await TelecallerAndCustomer.findOne({
+      // telecallerId: telecallerId,
+      userMobileNumber: number,
+    });
+    // find out the customer
     const customer = await Customer.findOne({ phone: number });
 
+    // check if the cutomer exists
     if (!customer) {
       return res
         .status(404)
-        .json({ status: false, message: "Telecaller not found" });
+        .json({ status: false, message: "Customer not found" });
+    }
+    // customer exists but relationship not found
+    if (customer && !isCustomerAlreadyAdded) {
+      const newRelationship = new TelecallerAndCustomer({
+        telecallerId: telecallerId,
+        userMobileNumber: number,
+      });
+      try {
+        await newRelationship.save();
+      } catch (err) {
+        console.log(err);
+        res.status(400).json({ status: false, message: "Invalid ID format" });
+      }
+      return res.status(200).json({
+        status: true,
+        message: "Customer fetched successfully",
+        customer,
+      });
     }
 
-    res.status(200).json({
-      status: true,
-      message: "Telecaller fetched successfully",
-      data: customer,
-    });
+    if (isCustomerAlreadyAdded.telecallerId === telecallerId) {
+      return res.status(200).json({
+        status: true,
+        message: "Customer already added by you ",
+        customer,
+      });
+    } else {
+      return res.status(400).json({
+        status: false,
+        message: "Customer already added by someone else",
+      });
+    }
   } catch (error) {
+    // console.log(error);
+
     res.status(400).json({ status: false, message: "Invalid ID format" });
   }
 });
