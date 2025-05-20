@@ -190,6 +190,8 @@ router.get("/get-customer/:number/:telecallerId", async (req, res) => {
     // find out the customer
     const customer = await Customer.findOne({ phone: number });
 
+    // console.log(isCustomerAlreadyAdded.telecallerId.toString() == telecallerId);
+
     // check if the cutomer exists
     if (!customer) {
       return res
@@ -215,7 +217,7 @@ router.get("/get-customer/:number/:telecallerId", async (req, res) => {
       });
     }
 
-    if (isCustomerAlreadyAdded.telecallerId === telecallerId) {
+    if (isCustomerAlreadyAdded.telecallerId.toString() === telecallerId) {
       return res.status(200).json({
         status: true,
         message: "Customer already added by you ",
